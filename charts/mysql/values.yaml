@@ -1,0 +1,62 @@
+
+replicaCount: 1
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "200m"
+fullnameOverride: ""
+stsenv:
+  - name:  MYSQL_USER
+    valueFrom:
+      secretKeyRef:
+        name:  name
+        key:  username
+  - name:  MYSQL_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name:  name
+        key: password
+
+serviceAccount: 
+podAnnotations: 
+  "example.com/annotation": "value"
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+image:
+  repository: mysql
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  port: 80
+env:
+  - name:  ENV_VAR
+    valueFrom:
+      secretKeyRef:
+        name:  name
+        key:  key
+  - name:  ANOTHER_ENV_VAR
+    valueFrom:
+      secretKeyRef:
+        name:  another-name
+        key:  another-key
+extraenv:
+  - name: TEST
+    value: test-value
+  - name: ANOTHER_TEST
+    value: another-test-value
+secret:
+  type: Opaque
+  username: "bXlzcWwtdXNlcg=="
+  password: "cGFzc3dvcmQ="
+volumeMounts:
+- name: mysql-config
+  mountPath: /docker-entrypoint-initdb.d

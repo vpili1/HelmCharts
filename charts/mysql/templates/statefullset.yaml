@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "mysql.fullname" .}}-statefulset
+  labels:
+    {{- include "mysql.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.podAnnotations | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  {{- if .Values.serviceAccount }}
+  serviceAccount: {{ .Values.serviceAccount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "mysql.labels" . | nindent 6 }}
+  template:
+      metadata:
+        name: {{ include "mysql.chart" . }}
+        labels:
+        {{- include "mysql.labels" . | nindent 10 }}
+      spec:
+        containers:
+        - name: {{ include "mysql.name" . }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "mysql.fullname" $ }}-envconfig
+          env:
+            {{- range .Values.stsenv }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mysql.fullname" $ }}-secret
+                  key: {{ .valueFrom.secretKeyRef.key }}
+            {{- end }}
+            - name: MYSQL_DATABASE
+              value: petclinic
+            - name: MYSQL_RANDOM_ROOT_PASSWORD
+              value: "yes"
+          resource:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          {{- toYaml .Values.volumeMounts | nindent 12 }}
+        volumes:
+        {{- range .Values.volumeMounts }}
+        - name: {{ .name }}
+          configMap:
+            name: {{ include "mysql.fullname" $ }}-configmap
+        {{- end }}

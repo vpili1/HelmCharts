@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "petclinicapp.fullname" . }}
+  labels:
+    app: {{ include "petclinicapp.name" . }}
+    chart: {{ include "petclinicapp.chart" . }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  {{- if .Values.serviceaccount }}
+  serviceAccount: {{ .Values.serviceaccount }}
+  {{- end }}
+  selector:
+    matchLabels:
+    {{- include "petclinicapp.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "petclinicapp.labels" . | nindent 8 }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/name: {{ include "petclinicapp.name" . }}
+    spec:
+      containers:
+      - name: {{ include "petclinicapp.chart" . }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        ports:
+        {{- range .Values.ports }}
+        - containerPort: {{ .containerPort }}
+        {{- end }}
+        env:
+        {{- range $key, $value := .Values.env }}
+        - name: {{ .name }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "petclinicapp.fullname" $ }}-secret
+              key: {{ .valueFrom.secretKeyRef.key }}
+        {{- end }}
+        command: ["java", "-jar", "/app/java.jar", "--spring.config.location=/opt/config/application.properties", "--spring.profiles.active=mysql"]
+        volumeMounts:
+        - name: {{ include "petclinicapp.fullname" . }}-volume
+          mountPath: "/opt/config"
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        startupProbe:
+          {{- toYaml .Values.startupProbe | nindent 10 }}
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 10 }}
+      volumes:
+      - name: {{ include "petclinicapp.fullname" . }}-volume
+        configMap:
+          name: {{ include "petclinicapp.fullname" . }}-config
