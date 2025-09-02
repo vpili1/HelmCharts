@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name:  name
   annotations:
-    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook": post-install
     "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": hook-succeeded
 spec:
@@ -14,5 +14,5 @@ spec:
       containers:
       - name: myjob
         image: busybox
-        command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 120']
+        command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 10']
       restartPolicy: Never
