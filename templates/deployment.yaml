@@ -22,7 +22,7 @@ spec:
         app.kubernetes.io/name: {{ include "petclinicapp.name" . }}
     spec:
       containers:
-      - name: {{ include "petclinicapp.chart" . }}
+      - name: {{ include "petclinicapp.name" . }}
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         ports:
         {{- range .Values.ports }}
